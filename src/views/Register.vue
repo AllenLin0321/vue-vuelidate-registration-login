@@ -113,6 +113,8 @@ import {
   minLength,
   sameAs
 } from "vuelidate/lib/validators";
+import axios from "axios";
+import router from "@/router";
 export default {
   data() {
     return {
@@ -155,21 +157,49 @@ export default {
   },
   methods: {
     registerAccount() {
+      const vm = this;
+
       // Check agree condition
       if (!this.register.checkAgree) {
-        this.snackbar.text = "Please Agree the Terms & Services";
-        this.snackbar.color = "error";
-        this.snackbar.show = true;
+        vm.showSnackBar("Please Agree the Terms & Services", "error");
         return;
       }
 
-      this.submitted = true;
-
       if (!this.$v.$invalid) {
-        this.snackbar.text = "SUCCESS!!";
-        this.snackbar.color = "success";
-        this.snackbar.show = true;
+        vm.submitted = true;
+        vm.loading = true;
+
+        const userData = {
+          username: vm.register.username,
+          email: vm.register.email,
+          age: vm.register.age,
+          password: vm.register.password
+        };
+
+        this.$store.dispatch("signUp", userData).then(() => {
+          vm.showSnackBar("SUCCESS!!", "success");
+          vm.cleanTextField();
+        });
       }
+    },
+    showSnackBar(content, color) {
+      const vm = this;
+      vm.snackbar.text = content;
+      vm.snackbar.color = color;
+      vm.snackbar.show = true;
+    },
+    cleanTextField() {
+      const vm = this;
+      vm.loading = false;
+      vm.submitted = false;
+
+      // Clean Text Field
+      vm.username = null;
+      vm.email = null;
+      vm.age = null;
+      vm.password = null;
+      vm.confirmPassword = null;
+      vm.checkAgree = false;
     }
   }
 };
