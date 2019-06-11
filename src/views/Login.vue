@@ -18,6 +18,7 @@
             label="Password"
             prepend-icon="lock"
             :error="submitted && $v.loginInfo.password.$invalid"
+            @keyup.enter="login"
           ></v-text-field>
           <v-btn color="info" :loading="loading" @click.prevent="login">Login</v-btn>
           <v-btn color="info" flat to="register">Register</v-btn>
@@ -53,7 +54,7 @@ export default {
         email: this.loginInfo.email,
         password: this.loginInfo.password
       };
-      this.$store.dispatch('login', formData);
+      this.$store.dispatch("login", formData);
       this.submitted = true;
     }
   }

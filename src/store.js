@@ -8,12 +8,20 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     idToken: null,
-    userId: null
+    userId: null,
+    userData: null
   },
   mutations: {
     authUser(state, userData) {
       state.idToken = userData.idToken;
       state.userId = userData.userId;
+    },
+    LOGOUT(state) {
+      state.idToken = null;
+      state.userId = null;
+    },
+    SAVEUSER(state, userData) {
+      state.userData = userData;
     }
   },
   actions: {
@@ -40,20 +48,24 @@ export default new Vuex.Store({
           // Add User Id to database
           userData.userId = res.data.localId;
 
-          // Save to Local Storage
+          // Save UserID& Token to Local Storage
           dispatch('saveLocalStorage', res);
 
-          // Save others User Info
+          // Save UserData to local Storage
+          localStorage.setItem('userData', JSON.stringify(userData));
+
+          // Save User Info into Firebase Database
           dispatch('storeUserData', userData);
 
           setTimeout(() => {
-            router.push("home");
-          }, 3000);
+            router.push("account");
+          }, 2500);
         })
         .catch(error => console.log(error));
     },
     login({
-      commit
+      commit,
+      dispatch
     }, authData) {
       const url = process.env.VUE_APP_LOGIN_URL;
       const APIKey = process.env.VUE_APP_API_KEY;
@@ -62,16 +74,57 @@ export default new Vuex.Store({
         password: authData.password,
         returnSecureToken: true
       };
-      axios.post(`${url}?key=${APIKey}`, user)
+      axios
+        .post(`${url}?key=${APIKey}`, user)
         .then(res => {
-          console.log(res)
+
+          // Save idToken and customer ID
           commit('authUser', {
             idToken: res.data.idToken,
             userId: res.data.localId
           })
-          router.push('home');
+
+          // Save to Local Storage
+          dispatch('saveLocalStorage', res);
+
+          router.push('account');
         })
         .catch(error => console.log(error))
+    },
+    fetchUser({
+      commit,
+      state
+    }) {
+      const url = process.env.VUE_APP_DATABASE_URL;
+      axios
+        .get(`${url}/users.json`)
+        .then(res => {
+          for (const key in res.data) {
+            if (res.data[key].userId === state.userId) {
+
+              // Save to state
+              commit('SAVEUSER', res.data[key]);
+
+              // Save to local Storage
+              localStorage.setItem('userData', JSON.stringify(res.data[key]));
+            }
+          }
+        })
+        .catch(error => console.log(error))
+    },
+    logout({
+      commit
+    }) {
+      // Remove state data
+      commit('LOGOUT');
+
+      // Remove local Storage Data
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userData');
+
+      // To login page
+      router.push('login');
     },
     saveLocalStorage({
       commit
@@ -80,7 +133,6 @@ export default new Vuex.Store({
       localStorage.setItem('userId', res.data.localId);
     },
     storeUserData({
-      commit,
       state
     }, userData) {
       if (!state.idToken) {
@@ -89,14 +141,26 @@ export default new Vuex.Store({
 
       const url = process.env.VUE_APP_DATABASE_URL;
 
-      axios.post(`${url}/users.json`, userData)
+      axios
+        .post(`${url}/users.json`, userData)
         .then(res => console.log(res))
         .catch(error => console.log(error))
     }
   },
   getters: {
     isAuthenticated(state) {
+
+      if (localStorage.getItem('token')) {
+        state.idToken = localStorage.getItem('token');
+        state.userId = localStorage.getItem('userId');
+      }
       return state.idToken !== null
+    },
+    userInfo(state) {
+      if (localStorage.getItem('userData')) {
+        state.userData = JSON.parse(localStorage.getItem('userData'));
+      }
+      return state.userData;
     }
   }
 })

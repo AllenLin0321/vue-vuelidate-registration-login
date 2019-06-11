@@ -8,6 +8,19 @@ export default new Router({
   routes: [{
       path: '/',
       name: 'home',
+      redirect: 'account',
+      children: [
+        {
+          path: 'account',
+          nanm: 'account',
+          component: () => import('./components/AccountInfo')
+        },
+        {
+          path: 'password',
+          nanm: 'password',
+          component: () => import('./components/ChangePW')
+        }
+      ],
       component: () => import('./views/Home.vue'),
       beforeEnter(to, from, next) {
         if (store.getters.isAuthenticated) {
@@ -29,7 +42,7 @@ export default new Router({
     },
     {
       path: '*',
-      redirect: '/'
+      redirect: '/login'
     }
   ]
 })
