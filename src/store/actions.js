@@ -28,9 +28,6 @@ export default {
         // Save UserID& Token to Local Storage
         dispatch('saveLocalStorage', res);
 
-        // Save UserData to local Storage
-        localStorage.setItem('userData', JSON.stringify(userData));
-
         // Save User Info into Firebase Database
         dispatch('storeUserData', userData);
 
@@ -51,8 +48,7 @@ export default {
       password: authData.password,
       returnSecureToken: true
     };
-    axios
-      .post(`${url}?key=${APIKey}`, user)
+    return axios.post(`${url}?key=${APIKey}`, user)
       .then(res => {
 
         // Save idToken and customer ID
@@ -64,16 +60,21 @@ export default {
         // Save to Local Storage
         dispatch('saveLocalStorage', res);
 
-        router.push('account');
+        return res.status;
+
       })
-      .catch(error => console.log(error))
+      // Save login unsuccessful
+      .catch(error => {
+        return error.response.status;
+      })
+
   },
   fetchUser({
     commit,
     state
   }) {
     const url = process.env.VUE_APP_DATABASE_URL;
-    axios
+    return axios
       .get(`${url}/users.json`)
       .then(res => {
         for (const key in res.data) {
@@ -84,6 +85,8 @@ export default {
 
             // Save to local Storage
             localStorage.setItem('userData', JSON.stringify(res.data[key]));
+
+            return res.data[key];
           }
         }
       })
@@ -102,6 +105,22 @@ export default {
 
     // To login page
     router.push('login');
+  },
+  changePW({
+    commit,
+    state
+  }, newPW) {
+    const url = process.env.VUE_APP_CHANGE_PASSWORD_URL;
+    const APIKey = process.env.VUE_APP_API_KEY;
+    const data = {
+      idToken: state.idToken,
+      password: newPW,
+      returnSecureToken: true
+    }
+    console.log(data);
+    return axios.post(`${url}?key=${APIKey}`, data)
+      .then(res => res.status)
+      .catch(error => console.log(error))
   },
   saveLocalStorage({
     commit

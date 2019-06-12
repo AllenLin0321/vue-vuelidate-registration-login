@@ -20,7 +20,7 @@
             :error="submitted && $v.loginInfo.password.$invalid"
             @keyup.enter="login"
           ></v-text-field>
-          <v-btn color="info" :loading="loading" @click.prevent="login">Login</v-btn>
+          <v-btn color="info" :loading="loading" @click.stop="login" :disabled="$v.$invalid">Login</v-btn>
           <v-btn color="info" flat to="register">Register</v-btn>
         </v-form>
       </v-flex>
@@ -30,6 +30,8 @@
 
 <script>
 import { required, minLength, email } from "vuelidate/lib/validators";
+import store from "@/store";
+import router from "@/router";
 export default {
   data() {
     return {
@@ -54,13 +56,19 @@ export default {
         email: this.loginInfo.email,
         password: this.loginInfo.password
       };
-      this.$store.dispatch("login", formData);
+      
       this.submitted = true;
+
+      // res=200 -> success, res = 400 -> fail
+      store.dispatch("login", formData).then(res => {
+        if (res === 200) {
+          alert("登入成功");
+          router.push("account");
+        } else {
+          alert("登入失敗");
+        }
+      });
     }
   }
 };
 </script>
-
-
-<style lang="scss" scoped>
-</style>

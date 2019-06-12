@@ -12,5 +12,8 @@ export default {
       state.userData = JSON.parse(localStorage.getItem('userData'));
     }
     return state.userData;
+  },
+  loginStatus(state) {
+    return state.loginStatus;
   }
 }
